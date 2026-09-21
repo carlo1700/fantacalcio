@@ -53,12 +53,13 @@ def compare_weight_configurations(
     """Return metrics for every weight configuration without ranking them."""
 
     comparison: dict[str, BacktestMetrics] = {}
+    materialized_cutoffs = tuple(cutoffs)
     for weights in weight_configurations:
         predictor = Backtester(PlayerPredictor(weights=weights))
         results = predictor.run(
             player,
             current_season=current_season,
-            cutoffs=cutoffs,
+            cutoffs=materialized_cutoffs,
         )
         label = ", ".join(
             f"{name}={weights[name]:.2f}"

@@ -18,11 +18,19 @@ class AggregateBacktestMetrics:
     availability_mae: float
     minutes_mae: float
     rating_mae: float
-    fantasy_points_mae: float
+    fantasy_points_if_playing_mae: float
+    fantasy_points_per_team_match_mae: float
     availability_observations: int
     minutes_observations: int
     rating_observations: int
-    fantasy_points_observations: int
+    fantasy_points_if_playing_observations: int
+    fantasy_points_per_team_match_observations: int
+
+    @property
+    def fantasy_points_observations(self) -> int:
+        """Backward-compatible alias for team-match observations."""
+
+        return self.fantasy_points_per_team_match_observations
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,9 +51,12 @@ class BacktestReportRow:
             "configuration": self.configuration,
             "predictions": self.prediction_count,
             "mae_rating": self.metrics.mae_rating,
-            "mae_fantasy_points": self.metrics.mae_fantasy_points,
-            "mae_goals": self.metrics.mae_goals,
-            "mae_assists": self.metrics.mae_assists,
+            "mae_fantasy_points_if_playing": self.metrics.mae_fantasy_points_if_playing,
+            "mae_fantasy_points_per_team_match": self.metrics.mae_fantasy_points_per_team_match,
+            "mae_goals_if_playing": self.metrics.mae_goals_if_playing,
+            "mae_goals_per_team_match": self.metrics.mae_goals_per_team_match,
+            "mae_assists_if_playing": self.metrics.mae_assists_if_playing,
+            "mae_assists_per_team_match": self.metrics.mae_assists_per_team_match,
         }
 
 
@@ -68,20 +79,28 @@ def calculate_aggregate_metrics(results: tuple[BacktestResult, ...]) -> Aggregat
         for result in results
         if result.actual_rating is not None and result.actual_minutes_played > 0
     ]
-    fantasy_errors = [
+    fantasy_if_playing_errors = [
+        abs(result.expected_fantasy_points_if_playing - result.actual_fantasy_points)
+        for result in results
+        if result.actual_minutes_played > 0 and result.actual_fantasy_points is not None
+    ]
+    fantasy_per_team_match_errors = [
         abs(result.expected_fantasy_points_per_team_match - result.actual_fantasy_points)
         for result in results
+        if result.actual_fantasy_points is not None
     ]
 
     return AggregateBacktestMetrics(
         availability_mae=_mean_absolute_error(availability_errors),
         minutes_mae=_mean_absolute_error(minutes_errors),
         rating_mae=_mean_absolute_error(rating_errors),
-        fantasy_points_mae=_mean_absolute_error(fantasy_errors),
+        fantasy_points_if_playing_mae=_mean_absolute_error(fantasy_if_playing_errors),
+        fantasy_points_per_team_match_mae=_mean_absolute_error(fantasy_per_team_match_errors),
         availability_observations=len(availability_errors),
         minutes_observations=len(minutes_errors),
         rating_observations=len(rating_errors),
-        fantasy_points_observations=len(fantasy_errors),
+        fantasy_points_if_playing_observations=len(fantasy_if_playing_errors),
+        fantasy_points_per_team_match_observations=len(fantasy_per_team_match_errors),
     )
 
 
@@ -120,7 +139,8 @@ def render_backtest_report(rows: list[BacktestReportRow]) -> str:
         "configurazione",
         "predizioni",
         "MAE voto",
-        "MAE fantapunti",
+        "MAE fantapunti se gioca",
+        "MAE fantapunti per partita squadra",
         "MAE gol",
         "MAE assist",
     ]
@@ -134,9 +154,10 @@ def render_backtest_report(rows: list[BacktestReportRow]) -> str:
             row.configuration,
             str(row.prediction_count),
             _format_value(row.metrics.mae_rating),
-            _format_value(row.metrics.mae_fantasy_points),
-            _format_value(row.metrics.mae_goals),
-            _format_value(row.metrics.mae_assists),
+            _format_value(row.metrics.mae_fantasy_points_if_playing),
+            _format_value(row.metrics.mae_fantasy_points_per_team_match),
+            _format_value(row.metrics.mae_goals_if_playing),
+            _format_value(row.metrics.mae_assists_if_playing),
         ]
         lines.append(" | ".join(values))
     return "\n".join(lines)

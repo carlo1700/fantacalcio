@@ -65,11 +65,15 @@ class BacktestResult:
         return self.target_match.assists
 
     @property
-    def actual_fantasy_points(self) -> float:
+    def actual_fantasy_points(self) -> float | None:
+        """Fantasy points, unavailable when an appearance has no rating."""
+
         if self.target_match.minutes_played == 0:
             return 0.0
+        if self.target_match.rating is None:
+            return None
         return (
-            (self.target_match.rating or 0.0)
+            self.target_match.rating
             + 3 * self.target_match.goals
             + self.target_match.assists
             + 3 * self.target_match.penalties_scored

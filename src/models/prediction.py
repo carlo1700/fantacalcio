@@ -38,3 +38,9 @@ class PlayerPrediction:
         """Expected contribution averaged over every team match."""
 
         return self.availability_probability * self.expected_fantasy_points_if_playing
+
+    @property
+    def expected_minutes_per_team_match(self) -> float:
+        """Expected minutes contributed over every team match."""
+
+        return self.availability_probability * self.expected_minutes_if_playing

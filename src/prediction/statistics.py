@@ -66,7 +66,7 @@ def calculate_weighted_statistics(
     """Combine season, last-10 and last-5 statistics using explicit weights."""
 
     eligible = sorted(
-        (match for match in matches if match.season == current_season and (as_of is None or match.date <= as_of)),
+        (match for match in matches if match.season == current_season and (as_of is None or match.date < as_of)),
         key=lambda match: match.date,
     )
     selected_weights = dict(DEFAULT_WEIGHTS if weights is None else weights)

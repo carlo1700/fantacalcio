@@ -36,7 +36,7 @@ def test_report_calculates_aggregate_metrics_for_unplayed_matches() -> None:
     assert row.aggregate_metrics.availability_observations == 1
     assert row.aggregate_metrics.fantasy_points_observations == 1
     assert row.aggregate_metrics.availability_mae == pytest.approx(1.0)
-    assert row.aggregate_metrics.fantasy_points_mae >= 0.0
+    assert row.aggregate_metrics.fantasy_points_per_team_match_mae >= 0.0
 
     rendered = render_backtest_report(report)
     assert "configurazione" in rendered

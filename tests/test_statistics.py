@@ -37,3 +37,19 @@ def test_unplayed_matches_reduce_availability_but_not_minutes_if_playing() -> No
 
     assert stats.availability == 0.5
     assert stats.minutes_if_playing == 90
+
+
+def test_statistics_cutoff_excludes_match_on_cutoff_date() -> None:
+    matches = [
+        Match(date(2026, 1, 1), "2026", minutes_played=90, rating=6),
+        Match(date(2026, 1, 8), "2026", minutes_played=90, rating=10),
+    ]
+
+    stats = calculate_weighted_statistics(
+        matches,
+        current_season="2026",
+        as_of=date(2026, 1, 8),
+        weights={"season": 1, "last_10": 0, "last_5": 0},
+    )
+
+    assert stats.rating_if_playing == 6

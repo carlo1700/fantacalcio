@@ -79,6 +79,28 @@ def test_weight_configuration_comparison_returns_metrics_for_each_configuration(
     assert all(metrics.observations == 2 for metrics in comparison.values())
 
 
+def test_weight_configuration_comparison_reuses_cutoff_generator() -> None:
+    player = Player(
+        "Giocatore sintetico",
+        [
+            Match(date(2026, 1, 1) + timedelta(days=7 * index), "2026", minutes_played=90, rating=6)
+            for index in range(3)
+        ],
+    )
+
+    comparison = compare_weight_configurations(
+        player,
+        current_season="2026",
+        cutoffs=(cutoff for cutoff in (date(2026, 1, 8), date(2026, 1, 15))),
+        weight_configurations=[
+            {"season": 1.0, "last_10": 0.0, "last_5": 0.0},
+            {"season": 0.5, "last_10": 0.3, "last_5": 0.2},
+        ],
+    )
+
+    assert all(metrics.observations == 2 for metrics in comparison.values())
+
+
 def test_backtest_result_exposes_team_match_fantasy_prediction() -> None:
     player = Player(
         "Giocatore sintetico",
@@ -110,5 +132,5 @@ def test_metrics_can_be_calculated_from_backtest_results() -> None:
     assert metrics.observations == 1
     assert metrics.rating_observations == 1
     assert metrics.mae_rating == 2
-    assert metrics.mae_goals == 1
-    assert metrics.mae_assists == 1
+    assert metrics.mae_goals_if_playing == 1
+    assert metrics.mae_assists_if_playing == 1
